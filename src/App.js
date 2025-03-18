@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 
 // Components for each page
 import Home from "./Home";
-import Services from "./Services";
+import Services from "./Sservices";
 import Signup from "./Signup";
 import UserRequest from "./UserRequests";
 import Login from "./Login";
@@ -16,7 +16,7 @@ function App() {
             <Routes>
                 {/* Routes for your pages */}
                 <Route path="/" element={<Home />} />
-                <Route path="/services" element={<Services />} />
+                <Route path="/sservices" element={<Sservices />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/user-request" element={<UserRequest />} />
                 <Route path="/login" element={<Login />} />
