@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Request</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        nav {
+            background-color: #333;
+            padding: 1em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 1.2em;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        .logout-button {
+            background-color: #f44336;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .logout-button:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div>
+            <a href="./admin-home.html">Home</a>
+            <a href="./admin-dashboard.html">Services</a>
+            <a href="admin-request.html">Requests</a>
+        </div>
+        <button id="logoutButton" class="logout-button">Logout</button>
+    </nav>
+    <header>
+        <h1>Customer Orders</h1>
+    </header>
+    <main>
+        <table id="requestsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Product Name</th>
+                    <th>Quantity</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="6">Loading requests...</td>
+                </tr>
+            </tbody>
+        </table>
+    </main>
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const logoutButton = document.getElementById("logoutButton");
+
+            // Enhanced Logout Functionality
+            logoutButton.addEventListener("click", () => {
+                // Clear all relevant data from local storage
+                localStorage.removeItem("token");
+                localStorage.removeItem("username");
+                localStorage.removeItem("password"); // Avoid storing passwords, if present
+                alert("You have been logged out.");
+                window.location.href = "./admin-login.html"; // Redirect to login page
+            });
+
+            const requestsTable = document.querySelector("#requestsTable tbody");
+
+            // Fetch all requests
+            async function fetchRequests() {
+                try {
+                    const response = await fetch("http://localhost:3000/api/requests");
+                    const requests = await response.json();
+
+                    // Populate the table
+                    requestsTable.innerHTML = "";
+                    requests.forEach(request => {
+                        const row = document.createElement("tr");
+
+                        row.innerHTML = `
+                            <td>${request.id}</td>
+                            <td>${request.username}</td>
+                            <td>${request.product_name}</td>
+                            <td>${request.quantity}</td>
+                            <td>${request.status}</td>
+                            <td>
+                                <select class="status-dropdown" data-id="${request.id}">
+                                    <option value="Pending" ${request.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="Approved" ${request.status === 'Approved' ? 'selected' : ''}>Approved</option>
+                                    <option value="Rejected" ${request.status === 'Rejected' ? 'selected' : ''}>Rejected</option>
+                                </select>
+                            </td>
+                        `;
+                        requestsTable.appendChild(row);
+                    });
+
+                    // Add event listeners to dropdowns
+                    addStatusChangeListeners();
+                } catch (error) {
+                    console.error("Error fetching requests:", error);
+                    requestsTable.innerHTML = "<tr><td colspan='6'>Failed to load requests.</td></tr>";
+                }
+            }
+
+            // Handle status change
+            function addStatusChangeListeners() {
+                const dropdowns = document.querySelectorAll(".status-dropdown");
+                dropdowns.forEach(dropdown => {
+                    dropdown.addEventListener("change", async (event) => {
+                        const requestId = event.target.getAttribute("data-id");
+                        const newStatus = event.target.value;
+
+                        try {
+                            const response = await fetch(`http://localhost:3000/api/requests/${requestId}`, {
+                                method: "PATCH",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({ status: newStatus }),
+                            });
+
+                            if (response.ok) {
+                                alert("Status updated successfully!");
+                                fetchRequests(); // Refresh the table
+                            } else {
+                                alert("Failed to update status.");
+                            }
+                        } catch (error) {
+                            console.error("Error updating status:", error);
+                            alert("An error occurred while updating the status.");
+                        }
+                    });
+                });
+            }
+
+            // Load requests on page load
+            fetchRequests();
+        });
+    </script>
+</body>
+</html>
